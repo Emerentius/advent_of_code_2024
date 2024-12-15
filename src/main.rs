@@ -56,25 +56,25 @@ fn day2(part: Part) {
         })
         .collect();
 
+    fn report_is_safe(report: &[i64]) -> bool {
+        let mut monotonically_increasing = true;
+        let mut monotonically_decreasing = true;
+        // let mut is_slowly_changing = true;
+
+        for (n1, n2) in report.iter().copied().tuple_windows() {
+            match n2 - n1 {
+                -3..=-1 => monotonically_increasing = false,
+                0 => return false, // not changing
+                1..=3 => monotonically_decreasing = false,
+                _ => return false, // changing too quickly
+            }
+        }
+
+        monotonically_increasing || monotonically_decreasing
+    }
+
     match part {
         Part::One => {
-            fn report_is_safe(report: &[i64]) -> bool {
-                let mut monotonically_increasing = true;
-                let mut monotonically_decreasing = true;
-                // let mut is_slowly_changing = true;
-
-                for (n1, n2) in report.iter().copied().tuple_windows() {
-                    match n2 - n1 {
-                        -3..=-1 => monotonically_increasing = false,
-                        0 => return false, // not changing
-                        1..=3 => monotonically_decreasing = false,
-                        _ => return false, // changing too quickly
-                    }
-                }
-
-                monotonically_increasing || monotonically_decreasing
-            }
-
             println!(
                 "{}",
                 reports
@@ -84,7 +84,20 @@ fn day2(part: Part) {
             );
         }
         Part::Two => {
-            to_be_implemented();
+            let n_safe = reports
+                .into_iter()
+                .filter(|report| {
+                    (0..report.len())
+                        .map(|skip_num| {
+                            let mut partial_report = report.clone();
+                            partial_report.remove(skip_num);
+                            partial_report
+                        })
+                        .any(|partial_report| report_is_safe(&partial_report))
+                })
+                .count();
+
+            println!("{n_safe}");
         }
     }
 }
