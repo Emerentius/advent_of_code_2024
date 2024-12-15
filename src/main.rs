@@ -1,23 +1,5 @@
-use std::{collections::HashMap, str::FromStr, u64};
+use std::{collections::HashMap, str::FromStr};
 use structopt::StructOpt;
-
-#[derive(PartialEq, Eq)]
-pub enum Part {
-    One,
-    Two,
-}
-
-impl FromStr for Part {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "1" => Ok(Part::One),
-            "2" => Ok(Part::Two),
-            _ => Err("only part 1 and 2 exist".to_owned()),
-        }
-    }
-}
 
 fn day1(part: Part) {
     let location_ids = include_str!("day1_input.txt");
@@ -58,6 +40,24 @@ fn day1(part: Part) {
                 .map(|(num, count)| num * count * right_counts.get(&num).cloned().unwrap_or(0))
                 .sum::<i64>();
             println!("{similarity_score}");
+        }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+pub enum Part {
+    One,
+    Two,
+}
+
+impl FromStr for Part {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "1" => Ok(Part::One),
+            "2" => Ok(Part::Two),
+            _ => Err("only part 1 and 2 exist".to_owned()),
         }
     }
 }
