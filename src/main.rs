@@ -139,6 +139,45 @@ fn day3(part: Part) {
     }
 }
 
+fn day4(part: Part) {
+    let letter_matrix = include_str!("day4_input.txt");
+    let letter_matrix = letter_matrix
+        .lines()
+        .map(|line| line.chars().collect_vec())
+        .collect_vec();
+
+    match part {
+        Part::One => {
+            let n_rows = letter_matrix.len() as i64;
+            let n_cols = letter_matrix[0].len() as i64;
+
+            let mut count = 0;
+            let directions =
+                itertools::iproduct!(-1i64..=1, -1i64..=1).filter(|&dir| dir != (0, 0));
+            for row in 0..n_rows {
+                for col in 0..n_cols {
+                    for (dx, dy) in directions.clone() {
+                        let word_found = (0..4)
+                            .map(|n_steps| (row + n_steps * dy, col + n_steps * dx))
+                            .take_while(|(row, col)| {
+                                (0..n_rows).contains(row) && (0..n_cols).contains(col)
+                            })
+                            .map(|(row, col)| letter_matrix[row as usize][col as usize])
+                            .eq("XMAS".chars());
+                        if word_found {
+                            count += 1;
+                        }
+                    }
+                }
+            }
+            println!("{count}");
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[derive(PartialEq, Eq)]
 pub enum Part {
     One,
@@ -182,7 +221,7 @@ fn main() {
         day1 as fn(Part),
         day2,
         day3,
-        // day4,
+        day4,
         // day5,
         // day6,
         // day7,
