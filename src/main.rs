@@ -20,7 +20,46 @@ impl FromStr for Part {
 }
 
 fn day1(part: Part) {
-    unimplemented!()
+    let location_ids = include_str!("day1_input.txt");
+    let (mut left, mut right) = location_ids
+        .lines()
+        .map(|line| {
+            let (left, right) = line.split_once("   ").unwrap();
+            (left.parse::<i64>().unwrap(), right.parse::<i64>().unwrap())
+        })
+        .collect::<(Vec<_>, Vec<_>)>();
+
+    match part {
+        Part::One => {
+            left.sort();
+            right.sort();
+            let difference = left
+                .iter()
+                .zip(&right)
+                // the problem description is actually missing what we need to do if the difference
+                // is negative.
+                .map(|(l, r)| (r - l).abs())
+                .sum::<i64>();
+            println!("{}", difference)
+        }
+        Part::Two => {
+            fn count_occurences(list: Vec<i64>) -> HashMap<i64, i64> {
+                let mut counts = HashMap::new();
+                for n in list {
+                    *counts.entry(n).or_insert(0) += 1;
+                }
+                counts
+            }
+
+            let left_counts = count_occurences(left);
+            let right_counts = count_occurences(right);
+            let similarity_score = left_counts
+                .into_iter()
+                .map(|(num, count)| num * count * right_counts.get(&num).cloned().unwrap_or(0))
+                .sum::<i64>();
+            println!("{similarity_score}");
+        }
+    }
 }
 
 #[derive(StructOpt)]
