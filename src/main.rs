@@ -102,6 +102,43 @@ fn day2(part: Part) {
     }
 }
 
+fn day3(part: Part) {
+    let code = include_str!("day3_input.txt");
+
+    match part {
+        Part::One => {
+            let regex = lazy_regex::regex!(r"mul\((\d{1,3}),(\d{1,3})\)");
+            let mut sum = 0;
+            for m in regex.captures_iter(code) {
+                // assuming recursive calls like mul(mul(1,1),2) are not valid
+                let num1 = m.get(1).unwrap().as_str().parse::<i64>().unwrap();
+                let num2 = m.get(2).unwrap().as_str().parse::<i64>().unwrap();
+                sum += num1 * num2;
+            }
+            println!("{sum}");
+        }
+        Part::Two => {
+            let regex = lazy_regex::regex!(r"(mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\))");
+            let mut sum = 0;
+            let mut is_enabled = true;
+            for m in regex.captures_iter(code) {
+                let whole_match_text = m.get(1).unwrap().as_str();
+                if whole_match_text.starts_with("mul") {
+                    if is_enabled {
+                        // assuming recursive calls like mul(mul(1,1),2) are not valid
+                        let num1 = m.get(2).unwrap().as_str().parse::<i64>().unwrap();
+                        let num2 = m.get(3).unwrap().as_str().parse::<i64>().unwrap();
+                        sum += num1 * num2;
+                    }
+                } else {
+                    is_enabled = whole_match_text == "do()";
+                }
+            }
+            println!("{sum}");
+        }
+    }
+}
+
 #[derive(PartialEq, Eq)]
 pub enum Part {
     One,
@@ -144,7 +181,7 @@ fn main() {
     let day_fns = [
         day1 as fn(Part),
         day2,
-        // day3,
+        day3,
         // day4,
         // day5,
         // day6,
