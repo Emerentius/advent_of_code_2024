@@ -1,6 +1,13 @@
 use itertools::Itertools;
-use std::{collections::HashMap, str::FromStr};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 use structopt::StructOpt;
+
+fn parse_num(string: &str) -> u64 {
+    string.parse().unwrap()
+}
 
 fn day1(part: Part) {
     let location_ids = include_str!("day1_input.txt");
@@ -207,6 +214,60 @@ fn day4(part: Part) {
     }
 }
 
+fn day5(part: Part) {
+    let input = include_str!("day5_input.txt");
+    let (rules_input, update_page_lists) = input.split_once("\n\n").unwrap();
+    let mut rules = HashMap::new();
+    for (before, after) in rules_input.lines().map(|line| {
+        let mut nums = line.split('|').map(parse_num);
+        (nums.next().unwrap(), nums.next().unwrap())
+    }) {
+        rules.entry(before).or_insert(HashSet::new()).insert(after);
+    }
+
+    let update_page_lists = update_page_lists
+        .lines()
+        .map(|line| line.split(',').map(parse_num).collect_vec())
+        .collect_vec();
+
+    match part {
+        Part::One => {
+            let mut middle_page_sum = 0;
+
+            for page_list in update_page_lists {
+                // what is the middle page, if list doesn't have oddly numbered count?
+                assert!(page_list.len() % 2 == 1);
+
+                let mut already_seen = HashSet::new();
+                let correctly_ordered = page_list.iter().all(|&page| {
+                    already_seen.insert(page);
+                    let rule = rules.get(&page);
+                    rule.map_or(true, |pages_after| already_seen.is_disjoint(pages_after))
+                });
+                if correctly_ordered {
+                    middle_page_sum += page_list[page_list.len() / 2];
+                }
+            }
+            println!("{middle_page_sum}");
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
+#[allow(unused)]
+fn day(part: Part) {
+    let input = include_str!("day1_input.txt");
+
+    match part {
+        Part::One => {}
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[derive(PartialEq, Eq)]
 pub enum Part {
     One,
@@ -251,7 +312,7 @@ fn main() {
         day2,
         day3,
         day4,
-        // day5,
+        day5,
         // day6,
         // day7,
         // day8,
