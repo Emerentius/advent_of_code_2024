@@ -150,7 +150,6 @@ fn day4(part: Part) {
         Part::One => {
             let n_rows = letter_matrix.len() as i64;
             let n_cols = letter_matrix[0].len() as i64;
-
             let mut count = 0;
             let directions =
                 itertools::iproduct!(-1i64..=1, -1i64..=1).filter(|&dir| dir != (0, 0));
@@ -173,7 +172,37 @@ fn day4(part: Part) {
             println!("{count}");
         }
         Part::Two => {
-            to_be_implemented();
+            let n_rows = letter_matrix.len();
+            let n_cols = letter_matrix[0].len();
+
+            let mut x_mas_count = 0;
+
+            for row in 1..n_rows - 1 {
+                for col in 1..n_cols - 1 {
+                    if letter_matrix[row][col] != 'A' {
+                        continue;
+                    }
+
+                    let diagonal_contains_mas = |cell1: (usize, usize), cell2| {
+                        let mut n_m = 0;
+                        let mut n_s = 0;
+
+                        for (row, col) in [cell1, cell2] {
+                            n_m += (letter_matrix[row][col] == 'M') as u8;
+                            n_s += (letter_matrix[row][col] == 'S') as u8;
+                        }
+                        n_m == 1 && n_s == 1
+                    };
+
+                    if diagonal_contains_mas((row - 1, col - 1), (row + 1, col + 1))
+                        && diagonal_contains_mas((row - 1, col + 1), (row + 1, col - 1))
+                    {
+                        x_mas_count += 1;
+                    }
+                }
+            }
+
+            println!("{x_mas_count}");
         }
     }
 }
