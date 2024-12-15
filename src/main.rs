@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::{collections::HashMap, str::FromStr};
 use structopt::StructOpt;
 
@@ -44,6 +45,50 @@ fn day1(part: Part) {
     }
 }
 
+fn day2(part: Part) {
+    let reports = include_str!("day2_input.txt");
+    let reports: Vec<Vec<_>> = reports
+        .lines()
+        .map(|line| {
+            line.split_whitespace()
+                .map(|n| n.parse::<i64>().unwrap())
+                .collect()
+        })
+        .collect();
+
+    match part {
+        Part::One => {
+            fn report_is_safe(report: &[i64]) -> bool {
+                let mut monotonically_increasing = true;
+                let mut monotonically_decreasing = true;
+                // let mut is_slowly_changing = true;
+
+                for (n1, n2) in report.iter().copied().tuple_windows() {
+                    match n2 - n1 {
+                        -3..=-1 => monotonically_increasing = false,
+                        0 => return false, // not changing
+                        1..=3 => monotonically_decreasing = false,
+                        _ => return false, // changing too quickly
+                    }
+                }
+
+                monotonically_increasing || monotonically_decreasing
+            }
+
+            println!(
+                "{}",
+                reports
+                    .into_iter()
+                    .filter(|report| report_is_safe(report))
+                    .count()
+            );
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[derive(PartialEq, Eq)]
 pub enum Part {
     One,
@@ -85,7 +130,7 @@ fn main() {
 
     let day_fns = [
         day1 as fn(Part),
-        // day2,
+        day2,
         // day3,
         // day4,
         // day5,
