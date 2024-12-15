@@ -230,28 +230,70 @@ fn day5(part: Part) {
         .map(|line| line.split(',').map(parse_num).collect_vec())
         .collect_vec();
 
+    let mut sorted_lists = vec![];
+    let mut unsorted_lists = vec![];
+    for page_list in update_page_lists {
+        // what is the middle page, if list doesn't have oddly numbered count?
+        assert!(page_list.len() % 2 == 1);
+
+        let mut already_seen = HashSet::new();
+        let correctly_ordered = page_list.iter().all(|&page| {
+            already_seen.insert(page);
+            let rule = rules.get(&page);
+            rule.map_or(true, |pages_after| already_seen.is_disjoint(pages_after))
+        });
+        if correctly_ordered {
+            sorted_lists.push(page_list);
+        } else {
+            unsorted_lists.push(page_list);
+        }
+    }
+
     match part {
         Part::One => {
-            let mut middle_page_sum = 0;
-
-            for page_list in update_page_lists {
-                // what is the middle page, if list doesn't have oddly numbered count?
-                assert!(page_list.len() % 2 == 1);
-
-                let mut already_seen = HashSet::new();
-                let correctly_ordered = page_list.iter().all(|&page| {
-                    already_seen.insert(page);
-                    let rule = rules.get(&page);
-                    rule.map_or(true, |pages_after| already_seen.is_disjoint(pages_after))
-                });
-                if correctly_ordered {
-                    middle_page_sum += page_list[page_list.len() / 2];
-                }
-            }
+            let middle_page_sum = sorted_lists
+                .into_iter()
+                .map(|list| list[list.len() / 2])
+                .sum::<u64>();
             println!("{middle_page_sum}");
         }
         Part::Two => {
-            to_be_implemented();
+            let mut middle_page_sum = 0;
+            for page_list in unsorted_lists {
+                // one should actually distinguish different elements of the page, but I assume
+                // they are unique
+                let mut not_yet_used = page_list.iter().cloned().collect::<HashSet<_>>();
+                let mut output = vec![];
+
+                while let Some(some_page) = not_yet_used.iter().cloned().next() {
+                    topologic_sort(&mut output, &mut not_yet_used, &rules, some_page);
+                }
+
+                middle_page_sum += output[output.len() / 2];
+            }
+
+            println!("{middle_page_sum}");
+
+            // DFS approach
+            // assuming cycles and page duplicates are impossible
+            fn topologic_sort(
+                output: &mut Vec<u64>,
+                unused_yet: &mut HashSet<u64>,
+                page_rules: &HashMap<u64, HashSet<u64>>,
+                page: u64,
+            ) {
+                if !unused_yet.contains(&page) {
+                    return;
+                }
+
+                // The order here is (I believe) the inverse of what is actually demanded,
+                // but it doesn't matter to get the middle page and I'm lazy.
+                for &page_after in page_rules.get(&page).into_iter().flatten() {
+                    topologic_sort(output, unused_yet, page_rules, page_after);
+                }
+                unused_yet.remove(&page);
+                output.push(page);
+            }
         }
     }
 }
