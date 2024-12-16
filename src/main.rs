@@ -306,53 +306,69 @@ fn day6(part: Part) {
         .map(|line| line.chars().map(|c| c == '#').collect_vec())
         .collect_vec();
 
-    let height = blocked_cells.len() as i32;
     let width = blocked_cells[0].len() as i32;
 
-    let mut visited_cells = vec![vec![false; width as usize]; height as usize];
+    let (starting_idx, _) = input
+        .chars()
+        .filter(|c| !c.is_whitespace())
+        .enumerate()
+        .find(|&(_, c)| c == '^')
+        .unwrap();
+
+    let starting_idx = starting_idx as i32;
+    let pos = Vector2::new(starting_idx % width, starting_idx / width);
+
+    // outputs (guard_route_is_cyclic, field of visited cells)
+    fn simulate_guard(
+        blocked_cells: &Vec<Vec<bool>>,
+        starting_pos: Vector2<i32>,
+    ) -> (bool, Vec<Vec<bool>>) {
+        let height = blocked_cells.len() as i32;
+        let width = blocked_cells[0].len() as i32;
+        let mut visited_cells = vec![vec![false; width as usize]; height as usize];
+
+        let rotate_right_90_deg = Matrix2::new(0, -1, 1, 0);
+        let mut velocity = Vector2::new(0, -1);
+        let mut already_visited = HashSet::new();
+
+        let mut pos = starting_pos;
+        // Problem guarantees the guard leaves the area. Otherwise, we'd need to check for cycles.
+        loop {
+            visited_cells[pos.y as usize][pos.x as usize] = true;
+            if !already_visited.insert((pos, velocity)) {
+                // cycle detected
+                break (true, visited_cells);
+            }
+            let next_pos = pos + velocity;
+            if !((0..width).contains(&next_pos.x) && (0..height).contains(&next_pos.y)) {
+                break (false, visited_cells);
+            } else if blocked_cells[next_pos.y as usize][next_pos.x as usize] {
+                velocity = rotate_right_90_deg * velocity;
+            } else {
+                pos = next_pos;
+            }
+        }
+        // printout the fields visited
+        // for (row, row_visited) in visited_cells.iter().enumerate() {
+        //     for (col, &is_visited) in row_visited.iter().enumerate() {
+        //         let ch = if blocked_cells[row][col] {
+        //             '#'
+        //         } else if is_visited {
+        //             'X'
+        //         } else {
+        //             '.'
+        //         };
+        //         print!("{}", ch);
+        //     }
+        //     println!()
+        // }
+    }
+
+    let (_, undisturbed_route_visited) = simulate_guard(&blocked_cells, pos);
 
     match part {
         Part::One => {
-            let rotate_right_90_deg = Matrix2::new(0, -1, 1, 0);
-            let mut velocity = Vector2::new(0, -1);
-
-            let (starting_idx, _) = input
-                .chars()
-                .filter(|c| !c.is_whitespace())
-                .enumerate()
-                .find(|&(_, c)| c == '^')
-                .unwrap();
-            let starting_idx = starting_idx as i32;
-            let mut pos = Vector2::new(starting_idx % width, starting_idx / width);
-
-            // Problem guarantees the guard leaves the area. Otherwise, we'd need to check for cycles.
-            loop {
-                visited_cells[pos.y as usize][pos.x as usize] = true;
-                let next_pos = pos + velocity;
-                if !((0..width).contains(&next_pos.x) && (0..height).contains(&next_pos.y)) {
-                    break;
-                } else if blocked_cells[next_pos.y as usize][next_pos.x as usize] {
-                    velocity = rotate_right_90_deg * velocity;
-                } else {
-                    pos = next_pos;
-                }
-            }
-
-            // printout the fields visited
-            // for (row, row_visited) in visited_cells.iter().enumerate() {
-            //     for (col, &is_visited) in row_visited.iter().enumerate() {
-            //         let ch = if blocked_cells[row][col] {
-            //             '#'
-            //         } else if is_visited {
-            //             'X'
-            //         } else {
-            //             '.'
-            //         };
-            //         print!("{}", ch);
-            //     }
-            //     println!()
-            // }
-            let n_visited = visited_cells
+            let n_visited = undisturbed_route_visited
                 .into_iter()
                 .flatten()
                 .filter(|&visited| visited)
@@ -360,7 +376,34 @@ fn day6(part: Part) {
             println!("{n_visited}");
         }
         Part::Two => {
-            to_be_implemented();
+            let obstruction_candidates = undisturbed_route_visited
+                .into_iter()
+                .enumerate()
+                .flat_map(|(row_nr, row)| {
+                    row.into_iter()
+                        .enumerate()
+                        .filter_map(move |(col_nr, visited)| {
+                            if visited && !(row_nr == pos.y as usize && col_nr == pos.x as usize) {
+                                Some((row_nr, col_nr))
+                            } else {
+                                None
+                            }
+                        })
+                });
+
+            let mut blocked_cells = blocked_cells;
+            let mut n_possible_cycles = 0;
+            for (row, col) in obstruction_candidates {
+                blocked_cells[row][col] = true;
+
+                if simulate_guard(&blocked_cells, pos).0 {
+                    n_possible_cycles += 1;
+                }
+
+                blocked_cells[row][col] = false;
+            }
+
+            println!("{n_possible_cycles}");
         }
     }
 }
