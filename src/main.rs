@@ -420,16 +420,26 @@ fn day7(part: Part) {
         })
         .collect_vec();
 
+    fn concatenate(num1: u64, num2: u64) -> u64 {
+        let width_num2 = if num2 == 0 {
+            1
+        } else {
+            ((num2 + 1) as f64).log10().ceil() as u32
+        };
+        num1 * 10u64.pow(width_num2) + num2
+    }
+
     // DFS of all possibilities
     fn result_can_be_reached(
+        allowed_operations: &[fn(u64, u64) -> u64],
         desired_result: u64,
         intermediate_result: u64,
         remaining_numbers: &[u64],
     ) -> bool {
         if let Some((&next_num, rest)) = remaining_numbers.split_first() {
-            for operation in [std::ops::Add::add, std::ops::Mul::mul] {
+            for &operation in allowed_operations {
                 let next_result = operation(intermediate_result, next_num);
-                if result_can_be_reached(desired_result, next_result, rest) {
+                if result_can_be_reached(allowed_operations, desired_result, next_result, rest) {
                     return true;
                 }
             }
@@ -439,21 +449,18 @@ fn day7(part: Part) {
         }
     }
 
-    match part {
-        Part::One => {
-            let mut total_calibration_result = 0;
-            for (desired_result, numbers) in equations {
-                let (first_num, rest) = numbers.split_first().unwrap();
-                if result_can_be_reached(desired_result, *first_num, rest) {
-                    total_calibration_result += desired_result;
-                }
-            }
-            println!("{total_calibration_result}");
-        }
-        Part::Two => {
-            to_be_implemented();
+    let allowed_operations = match part {
+        Part::One => &[std::ops::Add::add, std::ops::Mul::mul][..],
+        Part::Two => &[std::ops::Add::add, std::ops::Mul::mul, concatenate],
+    };
+    let mut total_calibration_result = 0;
+    for (desired_result, numbers) in equations {
+        let (first_num, rest) = numbers.split_first().unwrap();
+        if result_can_be_reached(allowed_operations, desired_result, *first_num, rest) {
+            total_calibration_result += desired_result;
         }
     }
+    println!("{total_calibration_result}");
 }
 
 #[allow(unused)]
