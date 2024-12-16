@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use nalgebra::{Matrix2, Vector2};
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
@@ -298,6 +299,72 @@ fn day5(part: Part) {
     }
 }
 
+fn day6(part: Part) {
+    let input = include_str!("day6_input.txt");
+    let blocked_cells = input
+        .lines()
+        .map(|line| line.chars().map(|c| c == '#').collect_vec())
+        .collect_vec();
+
+    let height = blocked_cells.len() as i32;
+    let width = blocked_cells[0].len() as i32;
+
+    let mut visited_cells = vec![vec![false; width as usize]; height as usize];
+
+    match part {
+        Part::One => {
+            let rotate_right_90_deg = Matrix2::new(0, -1, 1, 0);
+            let mut velocity = Vector2::new(0, -1);
+
+            let (starting_idx, _) = input
+                .chars()
+                .filter(|c| !c.is_whitespace())
+                .enumerate()
+                .find(|&(_, c)| c == '^')
+                .unwrap();
+            let starting_idx = starting_idx as i32;
+            let mut pos = Vector2::new(starting_idx % width, starting_idx / width);
+
+            // Problem guarantees the guard leaves the area. Otherwise, we'd need to check for cycles.
+            loop {
+                visited_cells[pos.y as usize][pos.x as usize] = true;
+                let next_pos = pos + velocity;
+                if !((0..width).contains(&next_pos.x) && (0..height).contains(&next_pos.y)) {
+                    break;
+                } else if blocked_cells[next_pos.y as usize][next_pos.x as usize] {
+                    velocity = rotate_right_90_deg * velocity;
+                } else {
+                    pos = next_pos;
+                }
+            }
+
+            // printout the fields visited
+            // for (row, row_visited) in visited_cells.iter().enumerate() {
+            //     for (col, &is_visited) in row_visited.iter().enumerate() {
+            //         let ch = if blocked_cells[row][col] {
+            //             '#'
+            //         } else if is_visited {
+            //             'X'
+            //         } else {
+            //             '.'
+            //         };
+            //         print!("{}", ch);
+            //     }
+            //     println!()
+            // }
+            let n_visited = visited_cells
+                .into_iter()
+                .flatten()
+                .filter(|&visited| visited)
+                .count();
+            println!("{n_visited}");
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[allow(unused)]
 fn day(part: Part) {
     let input = include_str!("day1_input.txt");
@@ -355,7 +422,7 @@ fn main() {
         day3,
         day4,
         day5,
-        // day6,
+        day6,
         // day7,
         // day8,
         // day9,
