@@ -408,6 +408,54 @@ fn day6(part: Part) {
     }
 }
 
+fn day7(part: Part) {
+    let input = include_str!("day7_input.txt");
+    let equations = input
+        .lines()
+        .map(|line| {
+            let (desired_result, numbers) = line.split_once(": ").unwrap();
+            let desired_result = parse_num(desired_result);
+            let numbers = numbers.split_whitespace().map(parse_num).collect_vec();
+            (desired_result, numbers)
+        })
+        .collect_vec();
+
+    // DFS of all possibilities
+    fn result_can_be_reached(
+        desired_result: u64,
+        intermediate_result: u64,
+        remaining_numbers: &[u64],
+    ) -> bool {
+        if let Some((&next_num, rest)) = remaining_numbers.split_first() {
+            for operation in [std::ops::Add::add, std::ops::Mul::mul] {
+                let next_result = operation(intermediate_result, next_num);
+                if result_can_be_reached(desired_result, next_result, rest) {
+                    return true;
+                }
+            }
+            false
+        } else {
+            return desired_result == intermediate_result;
+        }
+    }
+
+    match part {
+        Part::One => {
+            let mut total_calibration_result = 0;
+            for (desired_result, numbers) in equations {
+                let (first_num, rest) = numbers.split_first().unwrap();
+                if result_can_be_reached(desired_result, *first_num, rest) {
+                    total_calibration_result += desired_result;
+                }
+            }
+            println!("{total_calibration_result}");
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[allow(unused)]
 fn day(part: Part) {
     let input = include_str!("day1_input.txt");
@@ -466,7 +514,7 @@ fn main() {
         day4,
         day5,
         day6,
-        // day7,
+        day7,
         // day8,
         // day9,
         // day10,
