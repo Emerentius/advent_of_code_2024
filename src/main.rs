@@ -463,6 +463,77 @@ fn day7(part: Part) {
     println!("{total_calibration_result}");
 }
 
+fn day8(part: Part) {
+    let input = include_str!("day8_input.txt");
+    let board = input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|ch| if ch.is_alphanumeric() { Some(ch) } else { None })
+                .collect_vec()
+        })
+        .collect_vec();
+    let width = board[0].len() as i64;
+    let height = board.len() as i64;
+    let mut antinodes = vec![vec![false; board[0].len()]; board.len()];
+
+    let mut antenna_positions = HashMap::new();
+    for (row_nr, row) in board.iter().enumerate() {
+        for (col_nr, antenna) in row.iter().enumerate() {
+            if let Some(antenna) = antenna {
+                antenna_positions
+                    .entry(antenna)
+                    .or_insert(vec![])
+                    .push(Vector2::new(col_nr as i64, row_nr as i64));
+            }
+        }
+    }
+
+    let pos_is_on_board =
+        |pos: Vector2<i64>| (0..width).contains(&pos.x) && (0..height).contains(&pos.y);
+
+    match part {
+        Part::One => {
+            for (_, antenna_positions) in antenna_positions.iter() {
+                for (antenna_nr, pos2) in antenna_positions.iter().enumerate().skip(1) {
+                    for pos1 in &antenna_positions[..antenna_nr] {
+                        let diff = pos2 - pos1;
+                        for antinode in [pos2 + diff, pos1 - diff] {
+                            if pos_is_on_board(antinode) {
+                                antinodes[antinode.y as usize][antinode.x as usize] = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // print board
+            // for row in 0..height as usize {
+            //     for col in 0..width as usize {
+            //         if let Some(antenna) = board[row][col] {
+            //             print!("{}", antenna);
+            //         } else if antinodes[row][col] {
+            //             print!("#");
+            //         } else {
+            //             print!(".");
+            //         }
+            //     }
+            //     println!()
+            // }
+
+            let n_antinode_locations = antinodes
+                .iter()
+                .flatten()
+                .filter(|&&is_antinode| is_antinode)
+                .count();
+            println!("{n_antinode_locations}");
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[allow(unused)]
 fn day(part: Part) {
     let input = include_str!("day1_input.txt");
@@ -522,7 +593,7 @@ fn main() {
         day5,
         day6,
         day7,
-        // day8,
+        day8,
         // day9,
         // day10,
         // day11,
