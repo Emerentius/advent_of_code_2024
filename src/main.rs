@@ -491,47 +491,52 @@ fn day8(part: Part) {
 
     let pos_is_on_board =
         |pos: Vector2<i64>| (0..width).contains(&pos.x) && (0..height).contains(&pos.y);
+    for (_, antenna_positions) in antenna_positions.iter() {
+        for (antenna_nr, pos2) in antenna_positions.iter().enumerate().skip(1) {
+            for pos1 in &antenna_positions[..antenna_nr] {
+                let diff = pos2 - pos1;
 
-    match part {
-        Part::One => {
-            for (_, antenna_positions) in antenna_positions.iter() {
-                for (antenna_nr, pos2) in antenna_positions.iter().enumerate().skip(1) {
-                    for pos1 in &antenna_positions[..antenna_nr] {
-                        let diff = pos2 - pos1;
+                match part {
+                    Part::One => {
                         for antinode in [pos2 + diff, pos1 - diff] {
                             if pos_is_on_board(antinode) {
                                 antinodes[antinode.y as usize][antinode.x as usize] = true;
                             }
                         }
                     }
+                    Part::Two => {
+                        for (mut pos, direction) in [(*pos1, -diff), (*pos2, diff)] {
+                            while pos_is_on_board(pos) {
+                                antinodes[pos.y as usize][pos.x as usize] = true;
+                                pos += direction;
+                            }
+                        }
+                    }
                 }
             }
-
-            // print board
-            // for row in 0..height as usize {
-            //     for col in 0..width as usize {
-            //         if let Some(antenna) = board[row][col] {
-            //             print!("{}", antenna);
-            //         } else if antinodes[row][col] {
-            //             print!("#");
-            //         } else {
-            //             print!(".");
-            //         }
-            //     }
-            //     println!()
-            // }
-
-            let n_antinode_locations = antinodes
-                .iter()
-                .flatten()
-                .filter(|&&is_antinode| is_antinode)
-                .count();
-            println!("{n_antinode_locations}");
-        }
-        Part::Two => {
-            to_be_implemented();
         }
     }
+
+    let n_antinode_locations = antinodes
+        .iter()
+        .flatten()
+        .filter(|&&is_antinode| is_antinode)
+        .count();
+    println!("{n_antinode_locations}");
+
+    // print board
+    // for row in 0..height as usize {
+    //     for col in 0..width as usize {
+    //         if let Some(antenna) = board[row][col] {
+    //             print!("{}", antenna);
+    //         } else if antinodes[row][col] {
+    //             print!("#");
+    //         } else {
+    //             print!(".");
+    //         }
+    //     }
+    //     println!()
+    // }
 }
 
 #[allow(unused)]
