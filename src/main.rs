@@ -539,6 +539,58 @@ fn day8(part: Part) {
     // }
 }
 
+fn day9(part: Part) {
+    let input = include_str!("day9_input.txt");
+    let mut memory = Vec::with_capacity(input.len() * 5);
+    let mut is_file = true;
+    for (i, digit) in input.trim().chars().enumerate() {
+        let n_blocks = digit.to_digit(10).unwrap();
+        // could optimize by minimizing the data size, but whatevs
+        let memory_content = if is_file {
+            let file_id = i / 2;
+            Some(file_id)
+        } else {
+            None
+        };
+        memory.extend(std::iter::repeat(memory_content).take(n_blocks as usize));
+        is_file ^= true;
+    }
+
+    match part {
+        Part::One => {
+            let mut cursor_left = 0;
+            let mut cursor_right = memory.len() - 1;
+            while cursor_left < cursor_right {
+                match (
+                    memory[cursor_left].is_none(),
+                    memory[cursor_right].is_some(),
+                ) {
+                    (true, true) => {
+                        memory.swap(cursor_left, cursor_right);
+                        cursor_left += 1;
+                        cursor_right -= 1;
+                    }
+                    (left_ready, right_ready) => {
+                        cursor_left += (!left_ready) as usize;
+                        cursor_right -= (!right_ready) as usize;
+                    }
+                };
+            }
+
+            let checksum = memory
+                .iter()
+                .take_while(|data| data.is_some())
+                .enumerate()
+                .map(|(idx, data)| idx * data.unwrap())
+                .sum::<usize>();
+            println!("{checksum}");
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[allow(unused)]
 fn day(part: Part) {
     let input = include_str!("day1_input.txt");
@@ -599,7 +651,7 @@ fn main() {
         day6,
         day7,
         day8,
-        // day9,
+        day9,
         // day10,
         // day11,
         // day12,
