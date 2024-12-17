@@ -556,6 +556,15 @@ fn day9(part: Part) {
         is_file ^= true;
     }
 
+    fn checksum(memory: Vec<Option<usize>>) -> usize {
+        memory
+            .iter()
+            .enumerate()
+            .filter(|(_, data)| data.is_some())
+            .map(|(idx, data)| idx * data.unwrap())
+            .sum::<usize>()
+    }
+
     match part {
         Part::One => {
             let mut cursor_left = 0;
@@ -577,16 +586,67 @@ fn day9(part: Part) {
                 };
             }
 
-            let checksum = memory
-                .iter()
-                .take_while(|data| data.is_some())
-                .enumerate()
-                .map(|(idx, data)| idx * data.unwrap())
-                .sum::<usize>();
-            println!("{checksum}");
+            println!("{}", checksum(memory));
         }
         Part::Two => {
-            to_be_implemented();
+            #[derive(Clone, Copy)]
+            struct BlockChunk {
+                pos: usize,
+                len: usize,
+                file_id: Option<usize>,
+            }
+
+            let is_file = [true, false].into_iter().cycle();
+            let blocks = input.trim().chars().enumerate();
+            let mut chunks = blocks
+                .zip(is_file)
+                .map(|((pos, len), is_file)| BlockChunk {
+                    pos,
+                    len: len.to_digit(10).unwrap() as usize,
+                    file_id: is_file.then_some(pos / 2),
+                })
+                .collect_vec();
+
+            let mut memory = Vec::with_capacity(input.len() * 5);
+            // let mut new_chunks = Vec::with_capacity(chunks.len());
+            for chunk_idx in 0..chunks.len() {
+                let mut chunk = chunks[chunk_idx];
+                if chunk.file_id.is_some() {
+                    memory.extend(std::iter::repeat(chunk.file_id).take(chunk.len));
+                } else {
+                    while chunk.len > 0 {
+                        // search file that fits
+                        if let Some((file_chunk_idx, &file_chunk)) = chunks
+                            .iter()
+                            .enumerate()
+                            .skip(chunk_idx + 1)
+                            .rev()
+                            .find(|(_, ch)| ch.file_id.is_some() && ch.len <= chunk.len)
+                        {
+                            memory
+                                .extend(std::iter::repeat(file_chunk.file_id).take(file_chunk.len));
+                            chunk.len -= file_chunk.len;
+                            chunk.pos += file_chunk.len;
+                            // This will result in neighboring empty chunks that are treated as separate entities, but
+                            // it doesn't matter for the purpose here.
+                            chunks[file_chunk_idx].file_id = None;
+                        } else {
+                            memory.extend(std::iter::repeat(None).take(chunk.len));
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // for cell in &memory {
+            //     print!(
+            //         "{}",
+            //         cell.map_or('.', |num| char::from_digit(num as _, 10).unwrap())
+            //     );
+            // }
+            // println!("");
+            //println!("{:?}", memory);
+            println!("{}", checksum(memory));
         }
     }
 }
