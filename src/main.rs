@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use nalgebra::{Matrix2, Vector2};
+use nalgebra::{iter, Matrix2, Vector2};
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
@@ -654,6 +654,22 @@ fn day9(part: Part) {
     }
 }
 
+fn neighbors(
+    x: usize,
+    y: usize,
+    x_max: usize,
+    y_max: usize,
+) -> impl Iterator<Item = (usize, usize)> {
+    [
+        (x + 1, y),
+        (x, y.wrapping_sub(1)),
+        (x.wrapping_sub(1), y),
+        (x, y + 1),
+    ]
+    .into_iter()
+    .filter(move |&(x, y)| x < x_max && y < y_max)
+}
+
 fn day10(part: Part) {
     let input = include_str!("day10_input.txt");
     let map = input
@@ -682,21 +698,11 @@ fn day10(part: Part) {
             };
         }
 
-        let x_range = 0..map[0].len();
-        let y_range = 0..map.len();
-
-        [
-            (x + 1, y),
-            (x, y.wrapping_sub(1)),
-            (x.wrapping_sub(1), y),
-            (x, y + 1),
-        ]
-        .into_iter()
-        .filter(|(x, y)| x_range.contains(x) && y_range.contains(y))
-        .map(|neighbor_pos| {
-            find_trailheads(part, map, neighbor_pos, length + 1, reachable_trailheads)
-        })
-        .sum()
+        neighbors(x, y, map[0].len(), map.len())
+            .map(|neighbor_pos| {
+                find_trailheads(part, map, neighbor_pos, length + 1, reachable_trailheads)
+            })
+            .sum()
     }
 
     let solution: u64 = itertools::iproduct!(0..map[0].len(), 0..map.len())
@@ -747,6 +753,60 @@ fn day11(part: Part) {
             .map(|stone_nr| visit_generated_stones(n_blinks, stone_nr))
             .sum::<u64>()
     )
+}
+
+fn day12(part: Part) {
+    let input = include_str!("day12_input.txt");
+    let map = input.lines().map(|l| l.chars().collect_vec()).collect_vec();
+    let mut visited = vec![vec![false; map[0].len()]; map.len()];
+
+    struct Region {
+        area: u64,
+        perimeter: u64,
+    }
+
+    fn find_regions(
+        map: &[Vec<char>],
+        visited: &mut [Vec<bool>],
+        // regions: &mut Vec<Region>,
+        (x, y): (usize, usize),
+    ) -> Option<Region> {
+        if visited[y][x] {
+            return None;
+        }
+        visited[y][x] = true;
+        let mut area = 1;
+        let mut perimeter = 4;
+        for (x2, y2) in neighbors(x, y, map[0].len(), map.len()) {
+            let same_type = map[y2][x2] == map[y][x];
+
+            if same_type {
+                perimeter -= 1;
+                if let Some(subresult) = find_regions(map, visited, (x2, y2)) {
+                    area += subresult.area;
+                    perimeter += subresult.perimeter;
+                }
+            } else {
+                continue;
+            }
+        }
+        Some(Region { area, perimeter })
+    }
+
+    match part {
+        Part::One => {
+            let mut total_price = 0;
+            for (y, x) in itertools::iproduct!(0..map.len(), 0..map[0].len()) {
+                if let Some(region) = find_regions(&map, &mut visited, (x, y)) {
+                    total_price += region.area * region.perimeter;
+                }
+            }
+            println!("{total_price}");
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
 }
 
 #[allow(unused)]
@@ -812,7 +872,7 @@ fn main() {
         day9,
         day10,
         day11,
-        // day12,
+        day12,
         // day13,
         // day14,
         // day15,
