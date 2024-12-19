@@ -720,6 +720,7 @@ fn day11(part: Part) {
     let stones = input.split_whitespace().map(parse_num).collect_vec();
 
     // DFS of generation
+    #[memoize::memoize]
     fn visit_generated_stones(n_blinking_left: u8, stone_nr: u64) -> u64 {
         if n_blinking_left == 0 {
             return 1;
@@ -734,20 +735,18 @@ fn day11(part: Part) {
         }
     }
 
-    match part {
-        Part::One => {
-            println!(
-                "{}",
-                stones
-                    .into_iter()
-                    .map(|stone_nr| visit_generated_stones(25, stone_nr))
-                    .sum::<u64>()
-            )
-        }
-        Part::Two => {
-            to_be_implemented();
-        }
-    }
+    let n_blinks = match part {
+        Part::One => 25,
+        Part::Two => 75,
+    };
+
+    println!(
+        "{}",
+        stones
+            .into_iter()
+            .map(|stone_nr| visit_generated_stones(n_blinks, stone_nr))
+            .sum::<u64>()
+    )
 }
 
 #[allow(unused)]
