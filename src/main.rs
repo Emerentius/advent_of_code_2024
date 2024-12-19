@@ -408,6 +408,14 @@ fn day6(part: Part) {
     }
 }
 
+fn digit_width(num: u64) -> u32 {
+    if num == 0 {
+        1
+    } else {
+        ((num + 1) as f64).log10().ceil() as u32
+    }
+}
+
 fn day7(part: Part) {
     let input = include_str!("day7_input.txt");
     let equations = input
@@ -421,12 +429,7 @@ fn day7(part: Part) {
         .collect_vec();
 
     fn concatenate(num1: u64, num2: u64) -> u64 {
-        let width_num2 = if num2 == 0 {
-            1
-        } else {
-            ((num2 + 1) as f64).log10().ceil() as u32
-        };
-        num1 * 10u64.pow(width_num2) + num2
+        num1 * 10u64.pow(digit_width(num2)) + num2
     }
 
     // DFS of all possibilities
@@ -702,6 +705,51 @@ fn day10(part: Part) {
     println!("{solution}");
 }
 
+fn split_num_in_middle(num: u64) -> Option<(u64, u64)> {
+    let width = digit_width(num);
+    if width % 2 != 0 {
+        return None;
+    }
+
+    let divisor = 10u64.pow(width / 2);
+    Some((num / divisor, num % divisor))
+}
+
+fn day11(part: Part) {
+    let input = include_str!("day11_input.txt");
+    let stones = input.split_whitespace().map(parse_num).collect_vec();
+
+    // DFS of generation
+    fn visit_generated_stones(n_blinking_left: u8, stone_nr: u64) -> u64 {
+        if n_blinking_left == 0 {
+            return 1;
+        }
+        if stone_nr == 0 {
+            visit_generated_stones(n_blinking_left - 1, 1)
+        } else if let Some((num1, num2)) = split_num_in_middle(stone_nr) {
+            visit_generated_stones(n_blinking_left - 1, num1)
+                + visit_generated_stones(n_blinking_left - 1, num2)
+        } else {
+            visit_generated_stones(n_blinking_left - 1, stone_nr * 2024)
+        }
+    }
+
+    match part {
+        Part::One => {
+            println!(
+                "{}",
+                stones
+                    .into_iter()
+                    .map(|stone_nr| visit_generated_stones(25, stone_nr))
+                    .sum::<u64>()
+            )
+        }
+        Part::Two => {
+            to_be_implemented();
+        }
+    }
+}
+
 #[allow(unused)]
 fn day(part: Part) {
     let input = include_str!("day1_input.txt");
@@ -764,7 +812,7 @@ fn main() {
         day8,
         day9,
         day10,
-        // day11,
+        day11,
         // day12,
         // day13,
         // day14,
