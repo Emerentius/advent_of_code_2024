@@ -651,6 +651,57 @@ fn day9(part: Part) {
     }
 }
 
+fn day10(part: Part) {
+    let input = include_str!("day10_input.txt");
+    let map = input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|ch| ch.to_digit(10).unwrap() as u8)
+                .collect_vec()
+        })
+        .collect_vec();
+
+    fn find_trailheads(
+        part: Part,
+        map: &[Vec<u8>],
+        (x, y): (usize, usize),
+        length: u8,
+        reachable_trailheads: &mut HashSet<(usize, usize)>,
+    ) -> u8 {
+        if length != map[y][x] {
+            return 0;
+        }
+        if length == 9 {
+            return match part {
+                Part::One => reachable_trailheads.insert((x, y)) as u8,
+                Part::Two => 1,
+            };
+        }
+
+        let x_range = 0..map[0].len();
+        let y_range = 0..map.len();
+
+        [
+            (x + 1, y),
+            (x, y.wrapping_sub(1)),
+            (x.wrapping_sub(1), y),
+            (x, y + 1),
+        ]
+        .into_iter()
+        .filter(|(x, y)| x_range.contains(x) && y_range.contains(y))
+        .map(|neighbor_pos| {
+            find_trailheads(part, map, neighbor_pos, length + 1, reachable_trailheads)
+        })
+        .sum()
+    }
+
+    let solution: u64 = itertools::iproduct!(0..map[0].len(), 0..map.len())
+        .map(|pos| find_trailheads(part, &map, pos, 0, &mut HashSet::new()) as u64)
+        .sum::<u64>();
+    println!("{solution}");
+}
+
 #[allow(unused)]
 fn day(part: Part) {
     let input = include_str!("day1_input.txt");
@@ -663,7 +714,7 @@ fn day(part: Part) {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Part {
     One,
     Two,
@@ -691,7 +742,7 @@ struct Opt {
 fn parse_day(day: &str) -> Result<u8, Box<dyn std::error::Error>> {
     match day.parse()? {
         day @ 1..=25 => Ok(day),
-        _ => Err(format!("must be in range 1-25").into()),
+        _ => Err("must be in range 1-25".into()),
     }
 }
 
@@ -712,7 +763,7 @@ fn main() {
         day7,
         day8,
         day9,
-        // day10,
+        day10,
         // day11,
         // day12,
         // day13,
